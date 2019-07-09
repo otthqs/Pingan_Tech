@@ -14,4 +14,9 @@ def calculate_factor(factor):
     factor = factor.upper() # Ignore the upper and lower case
 
     if factor == "MACD":
-        
+        emas = cls.ewm(min_periods = 1, span = 12, ignore_na = True , adjust = False).mean()
+        emal = cls.ewm(min_periods = 1, span = 26, ignore_na = True , adjust = False).mean()
+        dif = emas - emal
+        dea = dif.ewm(min_periods = 1, span = 9, ignore_na = True, adjust = False).mean()
+        macd = (dif - dea) * 2
+        result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd) & (dif > macd)) * 1 + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd) & (dif < macd)) * -1
