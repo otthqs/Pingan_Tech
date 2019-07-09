@@ -1,4 +1,3 @@
-
 # 基于已有数据进行辅助指标的计算:
 # 1. MACD指标的计算仅判断，DIF线向上突破MACD和向下突破MACD的情况
 # 2. DMA指标判断DMA向上交叉平均线和向下交叉平均线时的情况，需要进一步确定short, long以及计算AMA时的window
@@ -128,10 +127,24 @@ def calculate_factor(factor):
         neg_dm: 前一日的最低价减去当日的最低价，如果直接为负数，则记为0, 是一个非负的变量
         在将pos_dm和neg_dm进行比较，值较大的继续保留，值较小的则归为0，这样保证了每天的动向就是正动向，负动向和无动向
         tr: 真实波幅：当日的最高价减去当日的最低价，当日的最高价减去前一日的收盘价，当日的最低价减去前一日的收盘价 三者中的数值的绝对值的最大值
+        pos_di: 正方向线：(pos_dm/tr) *100，要用平滑移动平均的pos_dm, tr来计算
+        neg_di: 负方向线：(neg_dm/tr) *100，要用平滑移动平均的neg_dm, tr来计算
+
+        To decide:移动平均的window，目前设为12
         """
+
+        n = 12
 
         pos_dm = np.maximum(high.diff(1), 0)
         neg_dm = np.maximum(-low.diff(1), 0)
 
+        pos_dm[pos_dm < neg_dm] = 0
+        neg_dm[neg_dm <= pos_dm] = 0
 
-        tr = np.maximum(np.maximum(np.abs(high - low), np.abs(high - close.shift(1))), np.abs(low - close.shift(1)))
+        tr = np.maximum(np.maximum(np.abs(high - low), np.abs(high - cls.shift(1))), np.abs(low - cls.shift(1)))
+
+        pos_di = pos_dm.ewm(span = 12, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
+        pos_di = pos_di.replace(float("inf"),0)
+
+        neg_di = neg_dm.ewm(span = 12, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
+        neg_di = neg_di.replace(float("inf"),0)
