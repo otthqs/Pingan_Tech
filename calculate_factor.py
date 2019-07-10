@@ -1,13 +1,11 @@
-# 基于已有数据进行辅助指标的计算:
-# 1. MACD指标的计算仅判断，DIF线向上突破MACD和向下突破MACD的情况
-# 2. DMA指标判断DMA向上交叉平均线和向下交叉平均线时的情况，需要进一步确定short, long以及计算AMA时的window
-# 3. TRIX为中长期指标
-
+"""
+用哑变量将形态因子进行量化表达视为事件因子，买入信号发生为1，卖出信号发生为-1，没有信号发生为0
+"""
 
 def calculate_factor(factor):
     """
-    factor: str, the name of factor
-    return: pd.DataFrame, values are dummy valriables of 1, 0 and -1
+    factor -> str: the name of factor
+    return -> DataFrame: values are dummy valriables of 1, 0 and -1
 
     Note: 1 is the signal of buying and -1 is the signal of selling
     """
@@ -129,8 +127,11 @@ def calculate_factor(factor):
         tr: 真实波幅：当日的最高价减去当日的最低价，当日的最高价减去前一日的收盘价，当日的最低价减去前一日的收盘价 三者中的数值的绝对值的最大值
         pos_di: 正方向线：(pos_dm/tr) *100，要用平滑移动平均的pos_dm, tr来计算
         neg_di: 负方向线：(neg_dm/tr) *100，要用平滑移动平均的neg_dm, tr来计算
+        dx: 动向指数：np.abs(pos_di-neg_di）/ (pos_di + neg_di) * 100
+        adx: dx的EMA，平滑移动平均算
 
-        To decide:移动平均的window，目前设为12
+        To decide:计算pos_di时移动平均的window，目前设为12
+                  计算adx的时候移动平均的window，目前设为12
         """
 
         n = 12
@@ -143,8 +144,13 @@ def calculate_factor(factor):
 
         tr = np.maximum(np.maximum(np.abs(high - low), np.abs(high - cls.shift(1))), np.abs(low - cls.shift(1)))
 
-        pos_di = pos_dm.ewm(span = 12, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
+        pos_di = pos_dm.ewm(span = n, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
         pos_di = pos_di.replace(float("inf"),0)
 
-        neg_di = neg_dm.ewm(span = 12, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
+        neg_di = neg_dm.ewm(span = n, min_periods = 1, ignore_na = True, adjust = False).mean()/tr.ewm(span = 12, min_periods = 1, adjust = False, ignore_na = True).mean() * 100
         neg_di = neg_di.replace(float("inf"),0)
+
+        dx = np.abs(pos_di - neg_di)/(pos_di + neg_di) * 100
+
+        m = 12
+        adx = dx.ewm(span = m, min_periods = 1, ignore_na = True, adjust = False).mean()
