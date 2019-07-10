@@ -1,9 +1,15 @@
+"""
+进行多因子检测以前，对因子进行分组的函数，将因子相同的股票视为一个股票指数来进行平均的划分
+"""
+
 def quant_factor(data,num):
     """
     Assign continuously factor value to each group before backtest
-    data: np.array
-    num : int
-    return : dictionary - key is the number of group, value is array
+
+    data -> np.array
+    num -> int
+
+    return -> dictionary: key is the number of group, value is array
 
     """
     total = len(data) - np.isnan(data).sum() # effective factors in all stocks
