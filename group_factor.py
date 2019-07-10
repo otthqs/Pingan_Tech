@@ -5,9 +5,10 @@
 def quant_factor(data,num):
     """
     Assign continuously factor value to each group before backtest
-    
+
     data -> np.array
     num -> int
+
     return -> dictionary: key is the number of group, value is array
 
     """

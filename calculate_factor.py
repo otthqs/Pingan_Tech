@@ -5,6 +5,7 @@
 def calculate_factor(factor):
     """
     factor -> str: the name of factor
+
     return -> DataFrame: values are dummy valriables of 1, 0 and -1
 
     Note: 1 is the signal of buying and -1 is the signal of selling
