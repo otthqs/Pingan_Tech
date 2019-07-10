@@ -8,6 +8,7 @@ def decay_method(decay_std, data):
 
     decay_std -> array
     data -> array
+
     return -> int
     """
 
@@ -25,6 +26,7 @@ def exponential_decay(alpha, len):
 
     alpha -> float
     len -> int
+    
     return -> array
     """
 
@@ -124,4 +126,4 @@ def ir_compose(res_dic, period_dic, direction_dic, rolling_period, ui2, Stock_Po
         if direction_dic[k] == -1:
             if_compose += v.mul(weight_df_shift[k], axis = 0)
 
-    return ir_compose 
+    return ir_compose
