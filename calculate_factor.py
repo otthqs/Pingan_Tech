@@ -383,4 +383,246 @@ def calculate_factor(factor):
     if factor == "SLOWKD":
         """
         慢速随机指标
+
+        To decide:
+        计算RSV的周期n，目前设置为9
+        计算MARSV的周期m，目前设置为3
         """
+
+        n = 9
+        ln, hn = low, high
+        for i in range(1,n+1):
+            ln = np.minimum(ln,low.shift(i))
+            hn = np.maximum(hn,high.shift(i))
+
+        rsv = (cls - ln) / (hn - ln) * 100
+
+        m = 3
+        marsv = rsv.rolling(window = m, min_periods = m-2).mean()
+        k_value = marsv.rolling(window = m, min_periods = m-2).mean()
+        d_value = k_value.rolling(window = m, min_periods = m-2).mean()
+
+        result = ((k_value <= 30) & (k_value >= 10) & (k_value.shift(1) < d_value.shift(1)) & (k_value > d_value)) * 1\
+                +((k_value <= 90) & (k_value >= 70) & (k_value.shift(1) > d_value.shift(1)) & (k_value < d_value)) * -1
+
+        return result
+
+    if factor == "MASS":
+        """
+        梅斯线
+        dif: 最高价与最低价的差，名为交易区间
+        ahl: dif的n天指数平均数，定义中为9
+        bhl: ahl的n天指数平均数，定义中为9
+        mass: ahl/bhl的m日的和，定义中为25
+        ma: n天的股价平均线，定义中为9
+
+        To decide:
+        计算指数平均的周期n，定义中为9
+        计算股价平均的周期n，定义中为9
+        计算比值求和的周期m，定义中为25
+        """
+        n = 9
+        m = 25
+        dif = high - low
+        ahl = dif.ewm(min_periods = 1, span = n, ignore_na = True , adjust = False).mean()
+        bhl = ahl.ewm(min_periods = 1, span = n, ignore_na = True , adjust = False).mean()
+        mass = (ahl/bhl).rolling(window = m, min_periods = m-n).sum()
+        ma = cls.rolling(window = n, min_periods = n - 2).mean()
+
+        result = ((mass.shift(2) > 27) & (mass.shift(1) <= 27) & (mass <=26.5) & (ma.shift(2) >= ma.shift(1)) & (ma.shift(1) >= ma)) * 1\
+                 ((mass.shift(2) < 27) & (mass.shift(1) >= 27) & (mass <=26.5) & (ma.shift(2) <= ma.shift(1)) & (ma.shift(1) <= ma)) * -1
+
+        return result
+
+
+    if factor == "%B":
+        """
+        布林极限
+
+        To decide：
+        计算布林线上下轨的周期n，目前设置为20
+        """
+        n = 20
+        up = cls.rolling(window = n, min_periods = n-5).mean() + 2 * cls.rolling(window = n, min_periods = n-5).std()
+        down = cls.rolling(window = n, min_periods = n-5).mean() - 2 * cls.rolling(window = n, min_periods = n-5).std()
+        bb = 100 * (cls - down) / (up - down)
+        result = (bb < 0) * 1 + (bb > 100) * -1
+        return result
+
+
+    if factor == "BBIBOLL":
+        """
+        多空布林线
+
+        To decide:
+        各个均线的window的值n,m,l,h，定义中为3，6，12，24
+        计算bbiboll上下轨的系数k，目前定义为6
+        计算bbiboll上下轨的窗口期s，目前定义为11
+        """
+        n = 3
+        m = 6
+        l = 12
+        h = 24
+        ma3 = cls.rolling(window = n, min_periods = 1).mean()
+        ma6 = cls.rolling(windwo = m, min_periods = m-1).mean()
+        ma12 = cls.rolling(window = l, min_periods = l-5).mean()
+        ma24 = cls.rolling(window = h, min_periods = h-5).mean()
+        bbiboll = (ma3 + ma6 + ma12 + ma24)/4
+        k = 6
+        s = 11
+        up = bbiboll + k * bbiboll.rolling(window = s, min_periods = s - 5).std()
+        down = bbiboll - k * bbiboll.rolling(window = s, min_periods = s - 5).std()
+        pass
+
+
+    if factor == "KELT":
+        """
+        未找到相应的定义和计算公式
+        """
+        pass
+
+
+    if factor == "ENV":
+        """
+        轨道线的简称
+
+        To decide:
+        计算价格线时，所选定的周期m，一般周期为14天，m = 14
+        计算上下轨线时，在价格线基础上，向上下浮动的单位n，一般为，n = 0.06
+        """
+        m = 14
+        n = 0.06
+        up = (1 + n) * cls.rolling(window = m, min_periods = m-3).mean()
+        down = (1 - n) * cls.rolling(window = m, min_periods = m-3).mean()
+
+        result = ((cls.shift(1) > down.shift(1)) & (cls <= down)) * 1 + ((cls.shift(1) < up.shift(1)) & (cls >= up)) * -1
+        return result
+
+
+    if factor == "CDP":
+        """
+        逆市操作指标，根据前一天的价格信息，在下一天同时卖出和买进股票，在一天之内对盯市进行操作，不符合目前的体系
+        cdp: (前一日的最高价 + 最低价 + 2倍收盘价) / 4
+        ah: cdp + (high - low)
+        nh: cdp * 2 - low
+        al: cdp - (high - low)
+        nl: cdp * 2 - high
+        """
+        cdp = (high + low + 2 * cls) / 4
+        ah = cdp + high - low
+        nh = cdp * 2 - low
+        al = cdp - (high - low)
+        nl = cdp * 2 - high
+        pass
+
+
+    if factor == "MIKE":
+        """
+        麦克支撑压力指标
+        分为初级压力线和支撑线之间的轨道，中级压力线和支撑线之间的轨道和强力压力线和支撑线之间的轨道
+        目前暂时用初级压力线之间的轨道来进行信号的判断
+        typ: （当日最高 + 当日最低 + 当日收盘价）/ 3
+        hn : n日的最高价的最高值
+        ln : n日内最低价的最低值
+        wekr: 初级压力线 = typ + typ - ln
+        midr: 中级压力线 = typ + hn - ln
+        stor: 强力压力线 = 2 * hn - ln
+        weks: 初级支撑线 = typ - (hn - typ)
+        mids: 中级支撑线 = typ - (hn - ln)
+        stos: 强力支撑线 = 2 * ln - hn
+
+        To decide:
+        计算最高价和最低价的窗口期n,目前为9
+        计算买入和卖出信号的轨道，目前是中级压力线和中级支撑线之间的轨道
+        """
+        typ = (high + low + cls) / 3
+
+        n = 9
+        ln, hn = low, high
+        for i in range(1,n+1):
+            ln = np.minimum(ln,low.shift(i))
+            hn = np.maximum(hn,high.shift(i))
+
+        wekr = typ + (typ - ln)
+        midr = typ + (hn - ln)
+        stor = 2 * hn - ln
+
+        weks = typ - (hn - typ)
+        mids = typ - (hn - ln)
+        stos = 2 * ln - hn
+
+        result = ((long_trend == 1) & (cls.shift(1) < midr.shift(1)) & (cls >= midr)) * 1\
+               +((long_trend == -1) & (cls.shift(1) > mids.shift(1)) & (cls <= mids)) * -1\
+                +((long_trend == 0) & (cls.shift(1) > mids.shift(1)) & (cls <= mids)) * 1\
+                +((long_trend == 0) & (cls.shift(1) < midr.shift(1)) & (cls >= midr)) * -1
+
+        return result
+
+
+    if factor == "CHAIKIN":
+        """
+        暂时未找到相应公式
+        """
+        pass
+
+
+    if factor == "OBV":
+        """
+        量能累积线，每日的成交量的累积，若上涨则为正的成交量，若下降则为负的成交量
+
+        To decide:
+        研报中创出新高的窗口期n的值，目前定义为5
+        """
+        obv = volume.copy() * 0
+        obv[cls >= opn] = volume[cls >= opn]
+        obv[cls < open] = -1 * volume[cls < opn]
+        obv = obv.cumsum()
+
+        n = 5
+
+        high_obv = obv.rolling(window = n, min_periods = n -2).max()
+        low_obv = obv.rolling(window = n, min_periods = n -2).min()
+        high_cls = cls.rolling(window = n, min_periods = n -2).max()
+        low_cls = cls.rolling(window = n, min_periods = n -2).min()
+
+        res_buy = (((cls == low_cls) & (obv != low_obv)) | ((cls != low_cls) & (obv == low_obv)) | ((obv.shift(1) < 0) & (obv >= 0))) * 1
+        res_sell = (((cls == high_cls) & (obv != high_obv)) | ((cls != high_cls) & (obv == high_obv)) | ((obv.shift(1) > 0) & (obv <= 0))) * -1
+
+        result = res_buy + res_sell
+        return result
+
+
+    if factor == "EMV":
+        """
+        简易波动指标
+        a = (今日最高 + 今日最低) / 2
+        b = (前日最高 + 前日最低) / 2
+        c = (今日最高 - 今日最低)
+        em = (a - b) * c / 今日成交额
+        emv = n日内em的累和
+        maemv = emv的m日的简单移动平均
+
+        To decide:
+        参数m的值，目前为 m=9; 参数n的值，目前为 n=14;
+        emv趋向于0的定义
+        """
+        m = 9
+        n = 14
+        a = (high + low) / 2
+        b = (high.shift(1) + low.shift(1)) / 2
+        c = high - low
+        em = (a - b) * c / amount
+        emv = em.rolling(window = n, min_periods = n - 5).sum()
+        maemv = emv.rolling(window = m, min_periods = m -2).mean()
+
+        result = ((emv > 0) & (emv <= 0.05)) * 1 + ((emv < 0) & (emv >= -0.05)) * -1
+        return result
+
+
+
+    if factor == "TAPI":
+        """
+        现值率
+        研报中未给出计算公式和具体的用法，只说了此因子不单独使用，要与大势和K线图等一起使用，故不进行计算
+        """
+        pass
