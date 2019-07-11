@@ -1,5 +1,6 @@
 """
 用哑变量将形态因子进行量化表达视为事件因子，买入信号发生为1，卖出信号发生为-1，没有信号发生为0
+SAR和B3612暂未进行定义
 """
 
 def calculate_factor(factor):
@@ -29,9 +30,9 @@ def calculate_factor(factor):
         dif = emas - emal
         dea = dif.ewm(min_periods = 1, span = l, ignore_na = True, adjust = False).mean()
         macd = (dif - dea) * 2
-        result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd.shift(1)) & (dif > macd)) * 1 \
-                 + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd.shift(1)) & (dif < macd)) * -1
-                 + ((dif < 0) & (macd < 0) & (dif.shift(1) > macd.shift(1)) & (dif < macd)) * 1
+        result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd.shift(1)) & (dif >= macd)) * 1 \
+                 + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * -1
+                 + ((dif < 0) & (macd < 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * 1
         return result
 
 
@@ -47,8 +48,8 @@ def calculate_factor(factor):
         l = 10
         dma = cls.rolling(window = n, min_periods = n-2).mean() - cls.rolling(window = m, min_periods = m-n).mean()
         ama = dma.rolling(window = l, min_periods = l-2).mean()
-        result = ((dma.shift(1) < ama.shift(1)) & (dma > ama)) * 1 \
-                 +((dma.shift(1) > ama.shift(1)) & (dma < ama))* -1
+        result = ((dma.shift(1) < ama.shift(1)) & (dma >= ama)) * 1 \
+                 +((dma.shift(1) > ama.shift(1)) & (dma <= ama))* -1
         return result
 
 
@@ -66,8 +67,8 @@ def calculate_factor(factor):
         tr = bx.ewm(span = n, min_periods = 1, ignore_na = True, adjust = False).mean()
         trix = (tr - tr.shift(1)) / (tr.shift(1)) * 100
         matrix = trix.rolling(window = m, min_periods = m-5).mean()
-        result = ((trix.shift(1) < matrix.shift(1)) & (trix > matrix)) * 1 \
-                 + ((trix.shift(1) > matrix) & (trix < matrix)) * -1
+        result = ((trix.shift(1) < matrix.shift(1)) & (trix >= matrix)) * 1 \
+                 + ((trix.shift(1) > matrix) & (trix <= matrix)) * -1
         return result
 
 
@@ -92,8 +93,8 @@ def calculate_factor(factor):
         q3 = cls.rolling(window = 400, min_periods = 200).quantile(0.75)
         q1 = cls.rolling(window = 400, min_periods = 200).quantile(0.25)
 
-        result = ((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls < bbi)) * 1\
-                +((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls > bbi)) * -1
+        result = ((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi)) * 1\
+                +((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi)) * -1
         return result
 
 
@@ -129,8 +130,8 @@ def calculate_factor(factor):
 
         ddi = diz - dif
 
-        result = ((ddi.shift(1) < 0) & (ddi > 0)) * 1\
-                 + ((ddi.shift(1) > 0) & (ddi < 0)) * -1
+        result = ((ddi.shift(1) < 0) & (ddi >= 0)) * 1\
+                 + ((ddi.shift(1) > 0) & (ddi <= 0)) * -1
 
         return result
 
@@ -175,8 +176,8 @@ def calculate_factor(factor):
 
         adxr = (adx + adx.shift(m)) / 2
 
-        result = ((pos_di.shift(1) < neg_di.shift(1)) & (pos_di > neg_di)) * 1\
-                + ((pos_di.shift(1) > neg_di.shift(1)) & (pos_di < neg_di)) * -1
+        result = ((pos_di.shift(1) < neg_di.shift(1)) & (pos_di >= neg_di)) * 1\
+                + ((pos_di.shift(1) > neg_di.shift(1)) & (pos_di <= neg_di)) * -1
 
         return result
 
@@ -197,8 +198,8 @@ def calculate_factor(factor):
         mtm = cls - cls.shift(n)
         mtma = mtm.rolling(window = m, min_periods = m-1).mean()
 
-        result = ((mtm.shift(1) < mtma.shift(1)) & (mtm > mtma)) * 1\
-                +((mtm.shift(1) > mtma.shift(1)) & (mtm < mama)) * -1
+        result = ((mtm.shift(1) < mtma.shift(1)) & (mtm >= mtma)) * 1\
+                +((mtm.shift(1) > mtma.shift(1)) & (mtm <= mama)) * -1
 
         return result
 
@@ -246,8 +247,8 @@ def calculate_factor(factor):
 
         j_value = 3 * k_value - 2 * d_value
 
-        result = ((k_value <= 30) & (k_value >= 10) & (k_value.shift(1) < d_value.shift(1)) & (k_value > d_value)) * 1\
-                + ((k_value <= 90) & (k_value >= 70) & (k_value.shift(1) > d_value.shift(1)) & (k_value < d_value)) * -1
+        result = ((k_value <= 30) & (k_value >= 10) & (k_value.shift(1) < d_value.shift(1)) & (k_value >= d_value)) * 1\
+                + ((k_value <= 90) & (k_value >= 70) & (k_value.shift(1) > d_value.shift(1)) & (k_value <= d_value)) * -1
 
         return result
 
@@ -257,6 +258,129 @@ def calculate_factor(factor):
         相对强弱指标
 
         To decide:
-        快速RSI的周期长度n
-        慢速RSI的周期长度m
+        快速RSI的周期长度n，目前设置为12
+        慢速RSI的周期长度m，目前设置为24
+        """
+        n = 12
+        m = 24
+
+        vol = (cls / opn - 1) * 100
+        pos_vol = vol.copy() * 0
+        neg_vol = vol.copy() * 0
+        pos_vol[vol > 0] = vol[vol > 0]
+        neg_vol[vol < 0] = vol[vol < 0]
+
+        quick_rsi = pos_vol.rolling(window = n, min_periods = n - 2).mean() / \
+                   (pos_vol.rolling(window = n, min_periods = n - 2).mean() + np.abs(neg_vol.rolling(window = n, min_periods = n - 2).mean()))
+
+        slow_rsi = pos_vol.rolling(window = m, min_periods = m - n).mean() / \
+                   (pos_vol.rolling(window = m, min_periods = m - n).mean() + np.abs(neg_vol.rolling(window = m, min_periods = m - n).mean()))
+
+        result = ((quick_rsi <= 20) & (quick_rsi.shift(1) < slow_rsi.shift(1)) & (quick_rsi >= slow_rsi)) * 1\
+                +((quick_rsi >= 80) & (quick_rsi.shift(1) > slow_rsi.shift(1)) & (quick_rsi <= slow_rsi)) * -1
+
+        return result
+
+
+    if factor == "ROC":
+        """
+        变动率指标
+        以今天的收盘价比较其n天前的收盘价的差除以n天前的收盘价
+
+        To decide:
+        周期n的选择，目前周期选择为5，市场上流行的通常是5或者10
+        """
+
+        n = 5
+        roc = cls / cls.shift(n) - 1
+        rocma = roc.rolling(window = n, min_periods = n-2).mean()
+
+        result = (((trend != 0) & (roc.shift(1) < 0) & (roc >= 0)) | ((trend == 0) & (roc.shift(1) < rocma.shift(1)) & (roc >= rocma))) * 1\
+                +(((trend != 0) & (roc.shift(1) > 0) & (roc <= 0)) | ((trend == 0) & (roc.shift(1) > rocma.shift(1)) & (roc <= rocma))) * -1
+
+        return result
+
+
+    if factor == "B3612":
+        """
+        B36: 收盘价的3日移动平均线与6日移动平均线的乖离值
+        B612: 收盘价的6日移动平均线与12日的移动平均线的乖离值
+        """
+        pass
+
+
+    if factor == "BIAS":
+        """
+        乖离率，计算收盘价与某条均线之间的差距百分比
+        用6日，12日，24日乖离率进行判断
+        """
+        bias_short = cls / cls.rolling(window = 6, min_periods = 3).mean() - 1
+        bias_middle = cls / cls.rolling(window = 12, min_periods = 6).mean() - 1
+        bias_long = cls / (cls.rolling(window = 24, min_periods = 12).mean() ) - 1
+
+        result = ((bias_short <= -0.04) | (bias_middle <= -0.05) | (bias_long <= -0.08)) * 1\
+                +((bias_short >= 0.045) | (bias_middle >= 0.06) | (bias_long >= 0.09)) * -1
+
+        return result
+
+
+    if factor == "CCI":
+        """
+        顺势指标
+        tp: （最高价 + 最低价 + 收盘价）/ 3
+        ma: n日tp价格的移动平均
+        md: n日(MA - TP)的绝对值累积和的平均值
+        cci: (tp - ma) / md / 0.015
+
+        To decide:
+        循环周期中n的值，系统默认为14
+        """
+        n =14
+
+        tp = (high + low + cls) / 3
+        ma = tp.rolling(window = n, min_periods = n-4).mean()
+        md = (np.abs(ma - tp)).rolling(window = n, min_periods = n-4).mean()
+        cci = (tp - ma) / md / 0.015
+
+        result = (((cci.shift(1) < 100) & (cci >= 100)) | ((cci.shift(1) < -100) & (cci >= -100))) * 1\
+                +(((cci.shift(1) > 100) & (cci <= 100)) | ((cci.shift(1) > -100) & (cci <= -100))) * -1
+
+        return result
+
+
+    if factor == "OSC":
+        """
+        变动速率线
+
+        To decide:
+        计算均线的周期，一般为10日
+        """
+        n = 10
+
+        osc = cls - cls.rolling(window = n, min_periods = n-2).mean()
+        oscma = osc.rolling(window = n, min_periods = n -2).mean()
+
+        result = ((osc.shift(1) < oscma.shift(1)) & (osc >= oscma)) * 1\
+                +((osc.shift(1) > oscma.shift(1)) & (osc <= oscma)) * -1
+        return result
+
+
+    if factor == "W&R":
+        """
+        威廉指标
+
+        To decide:
+        计算周期n，一般参数设置为10
+        """
+        n = 10
+
+        wr = 100 * (high.rolling(window = n, min_periods = n-2).max() - cls) / (high.rolling(window = n, min_periods = n-2).max() - low.rolling(window = n, min_periods = n-2).min())
+        result = ((wr.shift(1) < 80) & (wr >= 80)) * 1 + ((wr.shift(1) > 20) & (wr <= 20)) * -1
+
+        return result
+
+
+    if factor == "SLOWKD":
+        """
+        慢速随机指标
         """
