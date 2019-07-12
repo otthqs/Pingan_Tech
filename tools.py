@@ -44,7 +44,7 @@ def backtest_v2(data, period):
     result[(data == -1) & (Stock_Pool == 1)] = -1
 
     pos_num = (result == 1).sum().sum()
-    neg_num = (resukt == -1).sum().sum()
+    neg_num = (result == -1).sum().sum()
 
     def calculate_weight(result):
         """
@@ -67,20 +67,20 @@ def backtest_v2(data, period):
 
     long_ret = np.sum(long_weight * period_ret, axis = 1) #supposed to be positive values
     op_long_ret = np.sum(op_long_weight * period_ret, axis = 1)
-    op_long_ret = op_long_ret.where((result == 1).sum(axis = 1)).fillna(0)
+    op_long_ret = op_long_ret.where((result == 1).sum(axis = 1).astype(bool)).fillna(0)
 
 
 
     short_ret = np.sum(short_weight * period_ret, axis = 1) # Supposed to be negative values
     op_short_ret = np.sum(op_short_weight * period_ret, axis = 1)
-    op_short_ret = op_short_ret.where((result == -1).sum(axis = 1)).fillna(0)
+    op_short_ret = op_short_ret.where((result == -1).sum(axis = 1).astype(bool)).fillna(0)
 
 
 
     ret_long_opt = long_ret - op_long_ret
     ret_opt_short = op_short_ret - short_ret
 
-    ret_long_short = long_ret.where((result == -1).sum(axis = 1)).fillna(0) - short_ret.where((result == 1).sum(axis = 1)).fillna(0)
+    ret_long_short = long_ret.where((result == -1).sum(axis = 1).astype(bool)).fillna(0) - short_ret.where((result == 1).sum(axis = 1).astype(bool)).fillna(0)
 
     asset_l = [1]
     asset_s = [1]
@@ -91,11 +91,11 @@ def backtest_v2(data, period):
         asset_s.append(asset_s[-1] * (ret_opt_short[i] + 1))
         asset_ls.append(asset_ls[-1] * (ret_long_short[i] + 1))
 
-    ir_l = (pow((asset_l[-1], 1/9)) - 1) / (np.std(ret_long_opt) * np.sqrt(250))
-    ir_s = (pow((asset_s[-1], 1/9)) - 1) / (np.std(ret_opt_short) * np.sqrt(250))
-    ir_ls = (pow((asset_ls[-1], 1/9)) - 1) / (np.std(ret_long_short) * np.sqrt(250))
+    ir_l = (pow(asset_l[-1], 1/9) - 1) / (np.std(ret_long_opt) * np.sqrt(250))
+    ir_s = (pow(asset_s[-1], 1/9) - 1) / (np.std(ret_opt_short) * np.sqrt(250))
+    ir_ls = (pow(asset_ls[-1], 1/9) - 1) / (np.std(ret_long_short) * np.sqrt(250))
 
-    dt = pd.to_datetime(cls.index, format = "%y%m%d").tolist() # make time stamp
+    dt = pd.to_datetime(cls.index, format = "%Y%m%d").tolist() + [datetime.datetime.striptime(str(20181115), "%Y%m%d")] # make time stamp and make dimensions match
     fig = plt.figure(figsize = [12,8])
     ax1 = fig.add_subplot(111)
     ax1.plot(dt,pd.Series(asset_l), label = "long - opt", color = "red")
