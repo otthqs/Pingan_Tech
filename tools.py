@@ -105,4 +105,4 @@ def backtest_v2(data, period):
 
     plt.show()
 
-    return ir_ls, ir_lm, ir_ms, pos_num, neg_num
+    return ir_l, ir_s, ir_ls, pos_num, neg_num
