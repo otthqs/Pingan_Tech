@@ -30,8 +30,8 @@ def calculate_factor(factor):
         dif = emas - emal
         dea = dif.ewm(min_periods = 1, span = l, ignore_na = True, adjust = False).mean()
         macd = (dif - dea) * 2
-        result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd.shift(1)) & (dif >= macd)) * 1 \
-                 + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * -1
+        result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd.shift(1)) & (dif >= macd)) * 1\
+                 + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * -1\
                  + ((dif < 0) & (macd < 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * 1
         return result
 
