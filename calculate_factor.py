@@ -93,8 +93,9 @@ def calculate_factor(factor):
         q3 = cls.rolling(window = 400, min_periods = 200).quantile(0.75)
         q1 = cls.rolling(window = 400, min_periods = 200).quantile(0.25)
 
-        result = ((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi)) * 1\
-                +((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi)) * -1
+        result = ((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi)) * 1\
+                +((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi)) * -1
+
         return result
 
 
@@ -209,7 +210,17 @@ def calculate_factor(factor):
         抛物线指标，停损指标
         拟使用talib进行指标的计算
         """
-        pass
+        sar = cls.copy() * 0
+        for each in sar.columns:
+            try:
+                res = talib.SAR(high[each], low[each], acceleration = 0.02, maximum = 0.2)
+            except:
+                res = np.nan * len(cls.index)
+            sar[each] = res
+
+        result = ((cls.shift(1) < sar.shift(1)) & (cls >= sar)) * 1 \
+                +((cls.shift(1) > sar.shift(1)) & (cls <= sar)) * -1
+
 
 
     if factor == "KDJ":
@@ -458,6 +469,7 @@ def calculate_factor(factor):
         各个均线的window的值n,m,l,h，定义中为3，6，12，24
         计算bbiboll上下轨的系数k，目前定义为6
         计算bbiboll上下轨的窗口期s，目前定义为11
+        计算bbibill的std的周期，目前定义为c = 200
         """
         n = 3
         m = 6
@@ -472,14 +484,34 @@ def calculate_factor(factor):
         s = 11
         up = bbiboll + k * bbiboll.rolling(window = s, min_periods = s - 5).std()
         down = bbiboll - k * bbiboll.rolling(window = s, min_periods = s - 5).std()
-        pass
+
+        q3 = cls.rolling(window = 400, min_periods = 200).quantile(0.75)
+        q1 = cls.rolling(window = 400, min_periods = 200).quantile(0.25)
+
+        c = 200
+        bbiboll_std = bbiboll.rolling(window = c, min_periods = c//2).std()
+        std_q3 = bbiboll_std.rolling(window = 400, min_periods = 200).quantile(0.75)
+        std_q1 = bbiboll_std.rolling(window = 400, min_periods = 200).quantile(0.25)
+
+        result = ((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi) & (bbiboll_std < std_q1)) * 1\
+                +((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi) & (bbiboll_std > std_q3)) * -1
+
+        return result
+
 
 
     if factor == "KELT":
         """
         未找到相应的定义和计算公式
+        需要定一个初始价格，即建仓价格，定义为m个交易日的价格
+
+        To decide:
+        初始价格的周期，目前设置为m = 30
         """
-        pass
+        tr = np.maximum(np.maximum(np.abs(high - low), np.abs(high - cls.shift(1))), np.abs(low - cls.shift(1)))
+        atr = tr.rolling(window = m, min_periods = m - 5).mean()
+        result = (cls >= cls.shift(m) + 0.5 * atr) * 1 + (cls <= cls.shift(m) - 2 * atr) * -1
+        return result
 
 
     if factor == "ENV":
