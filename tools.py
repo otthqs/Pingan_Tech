@@ -58,10 +58,10 @@ def backtest_v2(data, period):
         return result.div(weight_sum, axis = "index")
 
     long_weight = calculate_weight((result == 1) * 1)
-    op_long_weight = calculate_weight((result != 1) * 1)
+    op_long_weight = calculate_weight(((result != 1) & (Stock_Pool == 1)) * 1)
 
     short_weight = calculate_weight((result == -1) * 1)
-    op_short_weight = calculate_weight((result != -1) * 1)
+    op_short_weight = calculate_weight(((result != -1) & (Stock_Pool == 1)) * 1)
 
     period_ret = ((ui2.shift(-period)/ui2).pow(1/period) - 1).fillna(0)
 
