@@ -104,5 +104,10 @@ def backtest_v2(data, period):
     ax1.legend(loc = "upper right", fontsize = 10)
 
     plt.show()
+    print("The IR of long-opt is %f\n\
+    The IR of short-opt is %f\n\
+    The IR of long-short is\n\
+    The number of positive signals are %d\n\
+    The number of negative signals are %d" %(ir_l, ir_s, ir_ls, pos_num, neg_num))
 
     return ir_l, ir_s, ir_ls, pos_num, neg_num
