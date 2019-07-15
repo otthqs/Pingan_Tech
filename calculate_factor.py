@@ -33,10 +33,9 @@ def calculate_factor(factor):
         result = ((dif > 0) & (macd > 0) & (dif.shift(1) < macd.shift(1)) & (dif >= macd)) * 1\
                  + ((dif > 0) & (macd > 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * -1\
                  + ((dif < 0) & (macd < 0) & (dif.shift(1) > macd.shift(1)) & (dif <= macd)) * 1
-        return result
 
 
-    if factor == "DMA":
+    elif factor == "DMA":
         """
         平行线差指标，中短期指标，dma为短期平均值减去长期平均值，ama为dma的平均值
 
@@ -50,10 +49,9 @@ def calculate_factor(factor):
         ama = dma.rolling(window = l, min_periods = l-2).mean()
         result = ((dma.shift(1) < ama.shift(1)) & (dma >= ama)) * 1 \
                  +((dma.shift(1) > ama.shift(1)) & (dma <= ama))* -1
-        return result
 
 
-    if factor == "TRIX":
+    elif factor == "TRIX":
         """
         三重指数平滑移动平均，中长期指标，目前设置第一次指数移动平均的window为12,计算MATRIX的window为20
 
@@ -69,10 +67,9 @@ def calculate_factor(factor):
         matrix = trix.rolling(window = m, min_periods = m-5).mean()
         result = ((trix.shift(1) < matrix.shift(1)) & (trix >= matrix)) * 1 \
                  + ((trix.shift(1) > matrix) & (trix <= matrix)) * -1
-        return result
 
 
-    if factor == "BBI":
+    elif factor == "BBI":
         """
         多空指数，将不同日数移动平均线加权之后的综合指标，属于均线型指标，一般选用3日，6日，12日，24日等4条平均线
 
@@ -96,10 +93,9 @@ def calculate_factor(factor):
         result = ((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi)) * 1\
                 +((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi)) * -1
 
-        return result
 
 
-    if factor == "DDI":
+    elif factor == "DDI":
         """
         方向标准离差指数，通过分析DDI柱状线进行判断
         tr: 最高价与昨日最高价的绝对值，和最低价与昨日最低价的绝对值中的大的数
@@ -134,10 +130,9 @@ def calculate_factor(factor):
         result = ((ddi.shift(1) < 0) & (ddi >= 0)) * 1\
                  + ((ddi.shift(1) > 0) & (ddi <= 0)) * -1
 
-        return result
 
 
-    if factor == "DMI":
+    elif factor == "DMI":
         """
         动向指标，一种中长期的股市分析指标
         pos_dm: 当日的最高价减去前一日的最高价，如果值为负数，则记为0，是一个非负的变量
@@ -180,10 +175,9 @@ def calculate_factor(factor):
         result = ((pos_di.shift(1) < neg_di.shift(1)) & (pos_di >= neg_di)) * 1\
                 + ((pos_di.shift(1) > neg_di.shift(1)) & (pos_di <= neg_di)) * -1
 
-        return result
 
 
-    if factor == "MTM":
+    elif factor == "MTM":
         """
         动力指标
         mtm: 当日收盘价与n日前的收盘价的差
@@ -200,12 +194,11 @@ def calculate_factor(factor):
         mtma = mtm.rolling(window = m, min_periods = m-1).mean()
 
         result = ((mtm.shift(1) < mtma.shift(1)) & (mtm >= mtma)) * 1\
-                +((mtm.shift(1) > mtma.shift(1)) & (mtm <= mama)) * -1
-
-        return result
+                +((mtm.shift(1) > mtma.shift(1)) & (mtm <= mtma)) * -1
 
 
-    if factor == "SAR":
+
+    elif factor == "SAR":
         """
         抛物线指标，停损指标
         拟使用talib进行指标的计算
@@ -223,7 +216,7 @@ def calculate_factor(factor):
 
 
 
-    if factor == "KDJ":
+    elif factor == "KDJ":
         """
         随机指标
         rsv：（第n日的收盘价与n日内的最低价的差 除以 n日内最高价与n日内最低价的差）乘以 100
@@ -261,10 +254,9 @@ def calculate_factor(factor):
         result = ((k_value <= 30) & (k_value >= 10) & (k_value.shift(1) < d_value.shift(1)) & (k_value >= d_value)) * 1\
                 + ((k_value <= 90) & (k_value >= 70) & (k_value.shift(1) > d_value.shift(1)) & (k_value <= d_value)) * -1
 
-        return result
 
 
-    if factor == "RSI":
+    elif factor == "RSI":
         """
         相对强弱指标
 
@@ -290,10 +282,9 @@ def calculate_factor(factor):
         result = ((quick_rsi <= 20) & (quick_rsi.shift(1) < slow_rsi.shift(1)) & (quick_rsi >= slow_rsi)) * 1\
                 +((quick_rsi >= 80) & (quick_rsi.shift(1) > slow_rsi.shift(1)) & (quick_rsi <= slow_rsi)) * -1
 
-        return result
 
 
-    if factor == "ROC":
+    elif factor == "ROC":
         """
         变动率指标
         以今天的收盘价比较其n天前的收盘价的差除以n天前的收盘价
@@ -309,10 +300,9 @@ def calculate_factor(factor):
         result = (((trend != 0) & (roc.shift(1) < 0) & (roc >= 0)) | ((trend == 0) & (roc.shift(1) < rocma.shift(1)) & (roc >= rocma))) * 1\
                 +(((trend != 0) & (roc.shift(1) > 0) & (roc <= 0)) | ((trend == 0) & (roc.shift(1) > rocma.shift(1)) & (roc <= rocma))) * -1
 
-        return result
 
 
-    if factor == "B3612":
+    elif factor == "B3612":
         """
         B36: 收盘价的3日移动平均线与6日移动平均线的乖离值
         B612: 收盘价的6日移动平均线与12日的移动平均线的乖离值
@@ -320,7 +310,7 @@ def calculate_factor(factor):
         pass
 
 
-    if factor == "BIAS":
+    elif factor == "BIAS":
         """
         乖离率，计算收盘价与某条均线之间的差距百分比
         用6日，12日，24日乖离率进行判断
@@ -332,10 +322,9 @@ def calculate_factor(factor):
         result = ((bias_short <= -0.04) | (bias_middle <= -0.05) | (bias_long <= -0.08)) * 1\
                 +((bias_short >= 0.045) | (bias_middle >= 0.06) | (bias_long >= 0.09)) * -1
 
-        return result
 
 
-    if factor == "CCI":
+    elif factor == "CCI":
         """
         顺势指标
         tp: （最高价 + 最低价 + 收盘价）/ 3
@@ -356,10 +345,9 @@ def calculate_factor(factor):
         result = (((cci.shift(1) < 100) & (cci >= 100)) | ((cci.shift(1) < -100) & (cci >= -100))) * 1\
                 +(((cci.shift(1) > 100) & (cci <= 100)) | ((cci.shift(1) > -100) & (cci <= -100))) * -1
 
-        return result
 
 
-    if factor == "OSC":
+    elif factor == "OSC":
         """
         变动速率线
 
@@ -373,10 +361,9 @@ def calculate_factor(factor):
 
         result = ((osc.shift(1) < oscma.shift(1)) & (osc >= oscma)) * 1\
                 +((osc.shift(1) > oscma.shift(1)) & (osc <= oscma)) * -1
-        return result
 
 
-    if factor == "W&R":
+    elif factor == "W&R":
         """
         威廉指标
 
@@ -388,10 +375,9 @@ def calculate_factor(factor):
         wr = 100 * (high.rolling(window = n, min_periods = n-2).max() - cls) / (high.rolling(window = n, min_periods = n-2).max() - low.rolling(window = n, min_periods = n-2).min())
         result = ((wr.shift(1) < 80) & (wr >= 80)) * 1 + ((wr.shift(1) > 20) & (wr <= 20)) * -1
 
-        return result
 
 
-    if factor == "SLOWKD":
+    elif factor == "SLOWKD":
         """
         慢速随机指标
 
@@ -416,9 +402,8 @@ def calculate_factor(factor):
         result = ((k_value <= 30) & (k_value >= 10) & (k_value.shift(1) < d_value.shift(1)) & (k_value > d_value)) * 1\
                 +((k_value <= 90) & (k_value >= 70) & (k_value.shift(1) > d_value.shift(1)) & (k_value < d_value)) * -1
 
-        return result
 
-    if factor == "MASS":
+    elif factor == "MASS":
         """
         梅斯线
         dif: 最高价与最低价的差，名为交易区间
@@ -441,12 +426,11 @@ def calculate_factor(factor):
         ma = cls.rolling(window = n, min_periods = n - 2).mean()
 
         result = ((mass.shift(2) > 27) & (mass.shift(1) <= 27) & (mass <=26.5) & (ma.shift(2) >= ma.shift(1)) & (ma.shift(1) >= ma)) * 1\
-                 ((mass.shift(2) < 27) & (mass.shift(1) >= 27) & (mass <=26.5) & (ma.shift(2) <= ma.shift(1)) & (ma.shift(1) <= ma)) * -1
-
-        return result
+                +((mass.shift(2) < 27) & (mass.shift(1) >= 27) & (mass <=26.5) & (ma.shift(2) <= ma.shift(1)) & (ma.shift(1) <= ma)) * -1
 
 
-    if factor == "%B":
+
+    elif factor == "%B":
         """
         布林极限
 
@@ -458,10 +442,9 @@ def calculate_factor(factor):
         down = cls.rolling(window = n, min_periods = n-5).mean() - 2 * cls.rolling(window = n, min_periods = n-5).std()
         bb = 100 * (cls - down) / (up - down)
         result = (bb < 0) * 1 + (bb > 100) * -1
-        return result
 
 
-    if factor == "BBIBOLL":
+    elif factor == "BBIBOLL":
         """
         多空布林线
 
@@ -476,7 +459,7 @@ def calculate_factor(factor):
         l = 12
         h = 24
         ma3 = cls.rolling(window = n, min_periods = 1).mean()
-        ma6 = cls.rolling(windwo = m, min_periods = m-1).mean()
+        ma6 = cls.rolling(window = m, min_periods = m-1).mean()
         ma12 = cls.rolling(window = l, min_periods = l-5).mean()
         ma24 = cls.rolling(window = h, min_periods = h-5).mean()
         bbiboll = (ma3 + ma6 + ma12 + ma24)/4
@@ -493,14 +476,12 @@ def calculate_factor(factor):
         std_q3 = bbiboll_std.rolling(window = 400, min_periods = 200).quantile(0.75)
         std_q1 = bbiboll_std.rolling(window = 400, min_periods = 200).quantile(0.25)
 
-        result = ((cls < q1) & (cls.shift(1) < bbi.shift(1)) & (cls >= bbi) & (bbiboll_std < std_q1)) * 1\
-                +((cls > q3) & (cls.shift(1) > bbi.shift(1)) & (cls <= bbi) & (bbiboll_std > std_q3)) * -1
-
-        return result
+        result = ((cls < q1) & (cls.shift(1) < bbiboll.shift(1)) & (cls >= bbiboll) & (bbiboll_std < std_q1)) * 1\
+                +((cls > q3) & (cls.shift(1) > bbiboll.shift(1)) & (cls <= bbiboll) & (bbiboll_std > std_q3)) * -1
 
 
 
-    if factor == "KELT":
+    elif factor == "KELT":
         """
         未找到相应的定义和计算公式
         需要定一个初始价格，即建仓价格，定义为m个交易日的价格
@@ -508,13 +489,13 @@ def calculate_factor(factor):
         To decide:
         初始价格的周期，目前设置为m = 30
         """
+        m = 30
         tr = np.maximum(np.maximum(np.abs(high - low), np.abs(high - cls.shift(1))), np.abs(low - cls.shift(1)))
         atr = tr.rolling(window = m, min_periods = m - 5).mean()
         result = (cls >= cls.shift(m) + 0.5 * atr) * 1 + (cls <= cls.shift(m) - 2 * atr) * -1
-        return result
 
 
-    if factor == "ENV":
+    elif factor == "ENV":
         """
         轨道线的简称
 
@@ -528,10 +509,9 @@ def calculate_factor(factor):
         down = (1 - n) * cls.rolling(window = m, min_periods = m-3).mean()
 
         result = ((cls.shift(1) > down.shift(1)) & (cls <= down)) * 1 + ((cls.shift(1) < up.shift(1)) & (cls >= up)) * -1
-        return result
 
 
-    if factor == "CDP":
+    elif factor == "CDP":
         """
         逆市操作指标，根据前一天的价格信息，在下一天同时卖出和买进股票，在一天之内对盯市进行操作，不符合目前的体系
         cdp: (前一日的最高价 + 最低价 + 2倍收盘价) / 4
@@ -548,7 +528,7 @@ def calculate_factor(factor):
         pass
 
 
-    if factor == "MIKE":
+    elif factor == "MIKE":
         """
         麦克支撑压力指标
         分为初级压力线和支撑线之间的轨道，中级压力线和支撑线之间的轨道和强力压力线和支撑线之间的轨道
@@ -565,7 +545,7 @@ def calculate_factor(factor):
 
         To decide:
         计算最高价和最低价的窗口期n,目前为9
-        计算买入和卖出信号的轨道，目前是中级压力线和中级支撑线之间的轨道
+        计算买入和卖出信号的轨道，目前是初级压力线和中级支撑线之间的轨道
         """
         typ = (high + low + cls) / 3
 
@@ -583,22 +563,20 @@ def calculate_factor(factor):
         mids = typ - (hn - ln)
         stos = 2 * ln - hn
 
-        result = ((long_trend == 1) & (cls.shift(1) < midr.shift(1)) & (cls >= midr)) * 1\
-               +((long_trend == -1) & (cls.shift(1) > mids.shift(1)) & (cls <= mids)) * -1\
-                +((long_trend == 0) & (cls.shift(1) > mids.shift(1)) & (cls <= mids)) * 1\
-                +((long_trend == 0) & (cls.shift(1) < midr.shift(1)) & (cls >= midr)) * -1
-
-        return result
+        result = ((long_trend == 1) & (cls.shift(1) < wekr.shift(1)) & (cls >= wekr)) * 1\
+               +((long_trend == -1) & (cls.shift(1) > weks.shift(1)) & (cls <= weks)) * -1\
+                +((long_trend == 0) & (cls.shift(1) > weks.shift(1)) & (cls <= weks)) * 1\
+                +((long_trend == 0) & (cls.shift(1) < wekr.shift(1)) & (cls >= wekr)) * -1
 
 
-    if factor == "CHAIKIN":
+    elif factor == "CHAIKIN":
         """
         暂时未找到相应公式
         """
         pass
 
 
-    if factor == "OBV":
+    elif factor == "OBV":
         """
         量能累积线，每日的成交量的累积，若上涨则为正的成交量，若下降则为负的成交量
 
@@ -621,10 +599,9 @@ def calculate_factor(factor):
         res_sell = (((cls == high_cls) & (obv != high_obv)) | ((cls != high_cls) & (obv == high_obv)) | ((obv.shift(1) > 0) & (obv <= 0))) * -1
 
         result = res_buy + res_sell
-        return result
 
 
-    if factor == "EMV":
+    elif factor == "EMV":
         """
         简易波动指标
         a = (今日最高 + 今日最低) / 2
@@ -648,13 +625,14 @@ def calculate_factor(factor):
         maemv = emv.rolling(window = m, min_periods = m -2).mean()
 
         result = ((emv > 0) & (emv <= 0.05)) * 1 + ((emv < 0) & (emv >= -0.05)) * -1
-        return result
 
 
 
-    if factor == "TAPI":
+    elif factor == "TAPI":
         """
         现值率
         研报中未给出计算公式和具体的用法，只说了此因子不单独使用，要与大势和K线图等一起使用，故不进行计算
         """
         pass
+
+    return result
