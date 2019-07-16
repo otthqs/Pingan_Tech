@@ -111,3 +111,48 @@ def backtest_v2(data, period):
     The number of negative signals are %d" %(ir_l, ir_s, ir_ls, pos_num, neg_num))
 
     return ir_l, ir_s, ir_ls, pos_num, neg_num
+
+
+def artificial_signals(data, num, Stock_Pool):
+    """
+    To generate artificial signals which would keep the same ratio of positive signals and negative signals of original signal
+
+    data -> DataFrame: original effective signals, the result of function calculate_factor
+    num -> int: the number of artificial signals you need
+
+    return -> dictionary: name is artificial, key is art + num, values are signals we generate
+    """
+    artificial = {}
+    for k in range(1,num+1):
+        artificial["art" + str(k)] = data.copy() * 0
+
+    for i in range(len(data)):
+        ary_ = np.array(data.iloc[i])
+        temp_ = ary_[Stock_Pool.iloc[i].astype(bool)]
+        for j in range(1,num+1):
+            random.shuffle(temp_)
+            ary_[Stock_Pool.iloc[i].astype(bool)] = temp_
+            artificial["art" + str(j)].iloc[i] = ary_
+
+    return artificial
+
+
+def accuracy(result, period):
+    """
+    Calculate the win rate of a certain signal
+
+    result -> DataFrame: the result of function calculate_factor
+    period -> int: holding period
+
+    return -> float: the winning rate of a certain signal
+           -> int: the total number of signals
+    """
+
+    #  Using Stock_Pool filter ineffective signals
+    res = result.copy() * 0
+    res[(result == 1) & (Stock_Pool == 1)] = 1
+    res[(result == -1) & (Stock_Pool == 1)] = -1
+    sig = np.sign(ui2.shift(-period) - ui2)
+    sig_ = sig * res
+    accuracy = ((sig_ == 1).sum().sum()) / (np.abs(res) == 1).sum().sum()
+    return accuracy, (np.abs(res) == 1).sum().sum()
