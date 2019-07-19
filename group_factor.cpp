@@ -1,4 +1,16 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
 
+
+vector<vector<float>> _quantize_factor(vector<float> factor_data, int num)
+{
+    vector<vector<float>> result(num,vector<float>(factor_data.size(),0));
+    float weight = factor_data.size() / float(num);
+    vector<float> short_volume(num,weight);
+
+    vector<vector<float>> data;
     vector<float> temp;
 
     for(int i = 0;i<factor_data.size();i++)

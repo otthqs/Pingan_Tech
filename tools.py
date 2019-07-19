@@ -6,6 +6,7 @@ def check_signals(data):
     """
     To find if signals appear singlely, or happens 2 in a row even, 3 in a row
 
+    Parm:
     data -> DataFrame: single factor results
 
     return -> dictionary: count number of single signals, two signals in a row and three signals in a row
@@ -32,6 +33,7 @@ def backtest_v2(data, period):
     - -1 and -1's complementary;
     - 1 and -1
 
+    Parm:
     data -> DataFrame: if signals happens or not, values of 1, -1 and 0
     period -> int: when the signal happens, our holding period
 
@@ -117,6 +119,7 @@ def artificial_signals(data, num, Stock_Pool):
     """
     To generate artificial signals which would keep the same ratio of positive signals and negative signals of original signal
 
+    Parm:
     data -> DataFrame: original effective signals, the result of function calculate_factor
     num -> int: the number of artificial signals you need
 
@@ -141,6 +144,7 @@ def accuracy(result, period):
     """
     Calculate the win rate of a certain signal
 
+    Parm:
     result -> DataFrame: the result of function calculate_factor
     period -> int: holding period
 

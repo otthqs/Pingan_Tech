@@ -6,6 +6,7 @@ def decay_method(decay_std, data):
     """
     One signal happens, we assume the signal's effect would last for several days and decay exponentially.
 
+    Parm:
     decay_std -> array
     data -> array
 
@@ -24,9 +25,10 @@ def exponential_decay(alpha, len):
     """
     Give decay rate and decay length, return exponentially decay weight
 
+    Parm:
     alpha -> float
     len -> int
-    
+
     return -> array
     """
 
@@ -44,6 +46,7 @@ def ir_compose(res_dic, period_dic, direction_dic, rolling_period, ui2, Stock_Po
     """
     Using rolling historical ir value as weight to compose a new continuous factor, decay period is the same as holding period
 
+    Parm:
     res_dic -> dictionary of DataFrame : each factor's result
     period_dic -> dictionary: every factor's effective holding period
     direction_dic -> dictionary: factor's direction, buying or selling
@@ -100,6 +103,57 @@ def ir_compose(res_dic, period_dic, direction_dic, rolling_period, ui2, Stock_Po
     rel_return = pd.DataFrame(index = ind)
     for k,v in res_dic.items():
         rel_return[k] = backtest(v, period_dic[k], ui2, direction_dic[k])
+
+    ir = rel_return.rolling(window = rolling_period, min_periods = 1).mean() / rel_return.rolling(window = rolling_period, min_periods = 1).std()
+    weight_df = ir.iloc[rolling_period - 1:]
+
+    weight_df_shift = weight_df.copy() * 0
+
+    for each in weight_df_shift.columns:
+        weight_df_shift[each] = weight_df[each].shift(period_dic[each])
+
+    weight_df_shift = weight_df_shift.iloc[20:]
+    weight_df_shift = np.maximum(weight_df_shift, 0)
+    ind_ = weight_df_shift.index
+
+    res_dic_ = {}
+    for k,v in res_dic.items():
+        decay_std = exponential_decay(1,period_dic[k])
+        res_dic_[k] = decay_method(decay_std, v).loc[ind_]
+
+    ir_compose = res_dic_[k_] * 0
+    for k,v in res_dic_.items():
+        if direction_dic[k] == 1:
+            ir_compose -= v.mul(weight_df_shift[k], axis = 0)
+
+        if direction_dic[k] == -1:
+            if_compose += v.mul(weight_df_shift[k], axis = 0)
+
+    return ir_compose
+
+
+
+def ir_compose_v2(rel_dic, res_dic, period_dic, direction_dic, rolling_period, ui2, Stock_Pool):
+    """
+    Using rolling historical ir value as weight to compose a new continuous factor, decay period is the same as holding period
+    Using rel_dic to replace the backtest process, increasing efficiency
+
+    Parm:
+    rel_dic -> dictionary of DataFrame : each factor's relative return
+    res_dic -> dictionary of DataFrame : each factor's result
+    period_dic -> dictionary: every factor's effective holding period
+    direction_dic -> dictionary: factor's direction, buying or selling
+    rolling_period -> int: rolling window length
+    Stock_Pool -> DataFrame: effective stock at each day, taking limit state into account
+    ui2 -> DataFrame: cumulative rate of return on traits
+
+    return -> DataFrame: compose factor
+    """
+
+
+    ind = list(res_dic.values())[0].index
+    k_ = list(res_dic.keys())[0]
+
 
     ir = rel_return.rolling(window = rolling_period, min_periods = 1).mean() / rel_return.rolling(window = rolling_period, min_periods = 1).std()
     weight_df = ir.iloc[rolling_period - 1:]
