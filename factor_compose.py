@@ -181,3 +181,51 @@ def ir_compose_v2(rel_dic, res_dic, period_dic, direction_dic, rolling_period, u
             if_compose += v.mul(weight_df_shift[k], axis = 0)
 
     return ir_compose
+
+
+
+def ir_compose_v3(rel_return, period_dic, direction_dic, rolling_period, ui2, Stock_Pool):
+        """
+        Using rolling historical ir value as weight to compose a new continuous factor, decay period is the same as holding period
+        Using res_dic_decay result to replace the decay process, increasing efficiency
+
+        Parm:
+        rel_dic -> dictionary of DataFrame : each factor's relative return
+        period_dic -> dictionary: every factor's effective holding period
+        direction_dic -> dictionary: factor's direction, buying or selling
+        rolling_period -> int: rolling window length
+        Stock_Pool -> DataFrame: effective stock at each day, taking limit state into account
+        ui2 -> DataFrame: cumulative rate of return on traits
+
+        return -> DataFrame: compose factor
+        """
+
+        fac_lst = rel_return。columns.tolist()
+
+        ir = rel_return.rolling(window = rolling_period, min_periods = 1).mean() / rel_return.rolling(window = rolling_period, min_periods = 1).std
+
+        weight_df = ir.iloc[rolling_period-1:]
+        weight_df_shift = weight_df.copy() * 0
+
+        for each in weight_df_shift.columns:
+            weight_df_shift[each] = weight_df[each].sbift(period_dic[each])
+        weight_df_shift = weight_df_shift.iloc[20:]
+        weight_df_shift = np.maximum(weight_df_shift,0)
+
+        ind_ = weight_df_shift.index
+
+        example = fac_lst[0]
+        example_data = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(example),index_col = 0)
+
+        ir_compose = example_data.loc[ind_] * 0
+
+        for k in fac_lst:
+            v = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(example),index_col = 0)
+
+            if direction_dic[k] == 1:
+                ir_compose -= v.mul(weight_df_shift[k], axis = 0)
+
+            if direction_dic[k] == -1:
+                ir_compose += v.mul(weight_df_shift[k], axis = 0)
+
+        return ir_compose

@@ -97,7 +97,7 @@ def backtest_v2(data, period):
     ir_s = (pow(asset_s[-1], 1/9) - 1) / (np.std(ret_opt_short) * np.sqrt(250))
     ir_ls = (pow(asset_ls[-1], 1/9) - 1) / (np.std(ret_long_short) * np.sqrt(250))
 
-    dt = pd.to_datetime(cls.index, format = "%Y%m%d").tolist() + [datetime.datetime.striptime(str(20181115), "%Y%m%d")] # make time stamp and make dimensions match
+    dt = pd.to_datetime(cls.index, format = "%Y%m%d").tolist() + [datetime.datetime.strptime(str(20181115), "%Y%m%d")] # make time stamp and make dimensions match
     fig = plt.figure(figsize = [12,8])
     ax1 = fig.add_subplot(111)
     ax1.plot(dt,pd.Series(asset_l), label = "long - opt", color = "red")
