@@ -100,7 +100,7 @@ double * _quantize_factor(double* factor_data, int length, int num)
 
     if (weight_temp != 0)
     {
-        group[pt_0][pt_1] = factor_data[length];
+        group[pt_0][pt_1] = ind[length];
         group_num += 1;
         group_weight[pt_0] = weight_temp;
     }
@@ -149,27 +149,27 @@ double * _quantize_factor(double* factor_data, int length, int num)
 
 }
 
-// 
-// int main()
-// {   int m = 3;
-//     double *data = new double[m+2];
-//     for (int i = 0; i<m; i++)
-//     {
-//         data[i] = i + 1;
-//     }
-//     data[3] = 1;
-//     data[4] = 2;
-//
-//     double *result;
-//
-//
-//     result = _quantize_factor(data, 5, 4);
-//
-//     for (int i = 0; i < 20; i++)
-//     {
-//         cout << result[i];
-//         cout << "\t";
-//     }
-//
-//     return 0;
-// }
+
+int main()
+{   int m = 3;
+    double *data = new double[m+2];
+    for (int i = 0; i<m; i++)
+    {
+        data[i] = i + 1;
+    }
+    data[3] = 1;
+    data[4] = 2;
+
+    double *result;
+
+
+    result = _quantize_factor(data, 5, 4);
+
+    for (int i = 0; i < 20; i++)
+    {
+        cout << result[i];
+        cout << "\t";
+    }
+
+    return 0;
+}
