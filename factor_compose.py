@@ -184,13 +184,14 @@ def ir_compose_v2(rel_dic, res_dic, period_dic, direction_dic, rolling_period, u
 
 
 
-def ir_compose_v3(rel_return, period_dic, direction_dic, rolling_period, ui2, Stock_Pool):
+def ir_compose_v3(rel_return_input, fac_lst, period_dic, direction_dic, rolling_period, ui2, Stock_Pool):
         """
         Using rolling historical ir value as weight to compose a new continuous factor, decay period is the same as holding period
         Using res_dic_decay result to replace the decay process, increasing efficiency
 
         Parm:
-        rel_dic -> dictionary of DataFrame : each factor's relative return
+        rel_return_input -> DataFrame : each factor's relative return
+        fac_lst -> list: the list of selected factors in the compose process
         period_dic -> dictionary: every factor's effective holding period
         direction_dic -> dictionary: factor's direction, buying or selling
         rolling_period -> int: rolling window length
@@ -200,7 +201,10 @@ def ir_compose_v3(rel_return, period_dic, direction_dic, rolling_period, ui2, St
         return -> DataFrame: compose factor
         """
 
-        fac_lst = rel_return。columns.tolist()
+        rel_return = pd.DataFrame()
+
+        for each in fac_lst:
+            rel_return[each] = rel_return_input[each]
 
         ir = rel_return.rolling(window = rolling_period, min_periods = 1).mean() / rel_return.rolling(window = rolling_period, min_periods = 1).std
 
