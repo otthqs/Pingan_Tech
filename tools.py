@@ -26,6 +26,35 @@ def check_signals(data):
     return dic
 
 
+def calculate_corr(res_dic, fac_lst, Stock_Pool):
+    """
+    To calculate the correlation coefficients between factors
+
+    res_dic -> dictionary of DataFrame : each factor's result, after decay
+    fac_lst -> list: the factor names
+    Stock_Pool -> DataFrame: The status of each stock in each day
+
+    return -> DataFrame: the correlation matrix
+    """
+
+    res_new = {}
+    for each in fac_lst:
+        temp = res_dic[each]
+        temp[(temp != 0) & (Stock_Pool == 1)] = 1
+        res_new[each] = temp
+
+    res = pd.DataFrame(index = fac_lst, columns = fac_lst)
+
+    for i in range(len(fac_lst)):
+        for j in range(i,len(fac_lst)):
+            temp_1 = res_new[fac_lst[i]]
+            temp_2 = res_new[fac_lst[j]]
+            res.loc[fac_lst[i], fac_lst[j]] = (((temp_1 == 1) & (temp_2 == 1)).sum()) / ((temp_1 == 1) | (temp_2 == 1)).sum()
+            res.loc[fac_lst[j], fac_lst[i]] = (((temp_1 == 1) & (temp_2 == 1)).sum()) / ((temp_1 == 1) | (temp_2 == 1)).sum()
+
+    return res
+
+
 def backtest_v2(data, period):
     """
     To backtest the result of one signal, focus on relative return:
