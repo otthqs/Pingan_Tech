@@ -35,6 +35,34 @@ void quicksort2(int* ind, double* data, int low, int high)
     return;
 }
 
+
+int search_left(int ind_now, double* data)
+{
+    double value_now = data[ind_now];
+    while(ind_now > 0)
+    {
+        ind_now -= 1;
+        if(data[ind_now] == value_now) continue;
+        else return ind_now+1;
+    }
+
+    return ind_now;
+}
+
+
+int search_right(int ind_now, double* data,int length)
+{
+    double value_now = data[ind_now];
+    while(ind_now < length -1)
+    {
+        ind_now += 1;
+        if(data[ind_now] == value_now) continue;
+        else return ind_now;
+    }
+
+    return ind_now +1;
+}
+
 double * _quantize_factor(double* factor_data, int length, int num)
 {
     // 初始化最后的返回指针
@@ -66,43 +94,46 @@ double * _quantize_factor(double* factor_data, int length, int num)
     }
 
     int group_num = 0;
-    int weight_temp = 1;
-    int * group_weight = new int[length];
+    int weight_temp;
+    int* group_weight = new int[2*num - 1];
 
-    double pre_value = factor_data[0];
-    int pt_0 = 0;
-    int pt_1 = 0;
+    int* support_points = new int[2*num];
+    support_points[0] = 0;
+    support_points[2*num - 1] = length;
+    int temp;
+    for(int i = 1; i < num; i++)
+    {   temp = double(length) / double(num) * i;
+        support_points[2*i-1] = search_left(temp, factor_data);
+        support_points[2*i] = search_right(temp, factor_data, length);
+    }
 
-    group[pt_0][pt_1] = ind[0];
-    pt_1 += 1;
-
-    for (int i = 1; i <length; i++)
+    int pre_max = 0;
+    int pt_1;
+    int j = 0;
+    while(j < 2*num - 1)
     {
-        if (factor_data[i] == pre_value)
+        if((support_points[j] >= support_points[j+1])||(support_points[j] < pre_max))
         {
-            group[pt_0][pt_1] = ind[i];
-            weight_temp += 1;
-            pt_1 += 1;
+            j += 1;
         }
 
         else
         {
-            group_weight[pt_0] = weight_temp;
-            weight_temp = 1;
-            pt_0 += 1;
+            weight_temp = support_points[j + 1] - support_points[j];
+            // cout << support_points[j]<< endl;
+            // cout << support_points[j+1] << endl;
+            group_weight[group_num] = weight_temp;
+            // cout << group_weight[0] << endl;
             pt_1 = 0;
-            group[pt_0][pt_1] = ind[i];
-            pt_1 += 1;
-            pre_value =factor_data[i];
+            for(int k = support_points[j]; k < support_points[j+1];k++)
+            {
+                group[group_num][pt_1] = ind[k];
+                pt_1 += 1;
+            }
+            pre_max = support_points[j+1];
             group_num += 1;
+            j += 1;
         }
-    }
-
-    if (weight_temp != 0)
-    {
-        group[pt_0][pt_1] = ind[length];
-        group_num += 1;
-        group_weight[pt_0] = weight_temp;
     }
 
 
@@ -159,6 +190,9 @@ int main()
     }
     data[3] = 1;
     data[4] = 2;
+
+    // for (int i = 0; i < m+2; i++)
+    // data[i] = 1;
 
     double *result;
 

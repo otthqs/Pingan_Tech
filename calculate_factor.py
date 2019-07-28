@@ -275,13 +275,13 @@ def calculate_factor(factor):
         neg_vol[vol < 0] = vol[vol < 0]
 
         quick_rsi = pos_vol.rolling(window = n, min_periods = n - 2).mean() / \
-                   (pos_vol.rolling(window = n, min_periods = n - 2).mean() + np.abs(neg_vol.rolling(window = n, min_periods = n - 2).mean()))
+                   (pos_vol.rolling(window = n, min_periods = n - 2).mean() + np.abs(neg_vol.rolling(window = n, min_periods = n - 2).mean())) * 100
 
         slow_rsi = pos_vol.rolling(window = m, min_periods = m - n).mean() / \
-                   (pos_vol.rolling(window = m, min_periods = m - n).mean() + np.abs(neg_vol.rolling(window = m, min_periods = m - n).mean()))
+                   (pos_vol.rolling(window = m, min_periods = m - n).mean() + np.abs(neg_vol.rolling(window = m, min_periods = m - n).mean())) * 100
 
-        result = ((quick_rsi <= 20) & (quick_rsi.shift(1) < slow_rsi.shift(1)) & (quick_rsi >= slow_rsi)) * 1\
-                +((quick_rsi >= 80) & (quick_rsi.shift(1) > slow_rsi.shift(1)) & (quick_rsi <= slow_rsi)) * -1
+        result = ((quick_rsi <= 40) & (quick_rsi.shift(1) < slow_rsi.shift(1)) & (quick_rsi >= slow_rsi)) * 1\
+                +((quick_rsi >= 60) & (quick_rsi.shift(1) > slow_rsi.shift(1)) & (quick_rsi <= slow_rsi)) * -1
 
 
 
