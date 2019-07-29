@@ -87,7 +87,7 @@ double * _quantize_factor(double* factor_data, int length, int num)
 
 
 // 初始化分组的内存 长度 * 长度
-    int ** group = new int *[length];
+    int ** group = new int *[2 * num -1];
     for (int i = 0; i < length; i++)
     {
         group[i] = new int[length];
@@ -172,8 +172,9 @@ double * _quantize_factor(double* factor_data, int length, int num)
     delete [] short_volume;
     delete [] ind;
     delete [] group_weight;
+    delete [] support_points;
 
-    for (int i = 0; i <length; i++)
+    for (int i = 0; i <2*num -1; i++)
     delete [] group[i];
 
     return result;

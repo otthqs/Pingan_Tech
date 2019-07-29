@@ -49,8 +49,8 @@ def calculate_corr(res_dic, fac_lst, Stock_Pool):
         for j in range(i,len(fac_lst)):
             temp_1 = res_new[fac_lst[i]]
             temp_2 = res_new[fac_lst[j]]
-            res.loc[fac_lst[i], fac_lst[j]] = (((temp_1 == 1) & (temp_2 == 1)).sum()) / ((temp_1 == 1) | (temp_2 == 1)).sum()
-            res.loc[fac_lst[j], fac_lst[i]] = (((temp_1 == 1) & (temp_2 == 1)).sum()) / ((temp_1 == 1) | (temp_2 == 1)).sum()
+            res.loc[fac_lst[i], fac_lst[j]] = ((temp_1 == 1) & (temp_2 == 1)).sum().sum() / ((temp_1 == 1) | (temp_2 == 1)).sum().sum()
+            res.loc[fac_lst[j], fac_lst[i]] = ((temp_1 == 1) & (temp_2 == 1)).sum().sum() / ((temp_1 == 1) | (temp_2 == 1)).sum().sum()
 
     return res
 
