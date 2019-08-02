@@ -233,3 +233,150 @@ def ir_compose_v3(rel_return_input, fac_lst, period_dic, direction_dic, rolling_
                 ir_compose += v.mul(weight_df_shift[k], axis = 0)
 
         return ir_compose
+
+
+
+def equally_weighted_method(fac_lst):
+    """
+    Compose factors using equally_weighted_method
+
+    fac_lst -> list: the name of factors need composing
+
+    return -> DataFrame: result_compose
+    """
+    example_name = fac_lst[0]
+    example_data = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(example_name),index_col = 0)
+
+    res = example_data.copy() * 0
+    for each in fac_lst:
+        data = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(each), index_col = 0)
+        res += data
+
+    return res
+
+
+
+
+def rolling_ols_method(fac_lst, ret, direction_dic, train_begin, train_end, test_begin, test_end):
+    """
+    Compose factors using regression year by year, need to specify the train period and test period
+
+    fac_lst -> list: the name of factors need composing
+    ret: -> DataFrame: daily return of every stock, ui2.shift(-1) / ui2 -1
+    direction_dic -> dictionary: direction dictionary of each factor
+    train_begin -> int: begin train date
+    train_end -> int: end train date
+    test_begin -> int: begin test date
+    test_end -> int: end test date
+    """
+
+    train_df = pd.DataFrame()
+    for each in fac_lst:
+        data = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(each),index_col = 0)
+        result_train = data.loc[train_begin, train_end]
+        result_train = np.concatenate(np.array(result_train.T),axis = 0)
+        train_df[each] = result_train
+    train_df = train_df.replace(0,np.nan)
+    train_df["y"] = np.concatenate(np.array(ret.loc[train_begin,train_end].T),axis = 0)
+    train_df = train_df.dropna(thresh = 2).replace(np.nan,0)
+    model = linear_model.LinearRegreesion()
+    train_df_x = train_df.iloc[:,:-1]
+    assert "y" not in train_df_x.columns
+    model.fit(train_df_x, train_df.y)
+    coef = pd.Series(model.coef_)
+
+    res = data.loc[test_begin:test_end] * 0
+    count = 0
+    for ind, each in enumerate(fac_lst):
+        if (np.sign(coef[ind]) * direction_dic[each]) == 1:
+            count += 1
+            data = pd.read_csv("/home/Data/data_decay/{}_decay.csv".format(each),index_col = 0).loc[test_begin,test_end]
+            res -= coef[ind] * data
+
+    print("According to our prior directions, we have %d qualified factors" %count)
+
+    return res
+
+
+
+
+def rolling_rf(fac_lst, train_begin, train_end, test_begin, test_end):
+    """
+    Train random forest model and use the predict value as compose factor of our factors
+
+    fac_lst -> list: the name of factors need composing
+    train_begin -> int: begin train date
+    train_end -> int: end train date
+    test_begin -> int: begin test date
+    test_end -> int: end test date
+    """
+    train_df = pd.DataFrame()
+    for i in range(len(fac_lst)):
+        data = res_lst[i]
+        result_train = data.loc[train_begin:train_end]
+        result_train = np.concatenate(np.array(result_train.T),axis = 0)
+        train_df[fac_lst[i]] = result_train
+    train_df = train_df.replace(0, np.nan)
+    train_df["y"] = np.concatenate(np.array(ret.loc[train_begin:train_end].T),axis = 0)
+    train_df = train_df.dropna(thresh = 2).replace(np.nan,0)
+    reg = RandomForestRegressor()
+    train_df_x = train_df.iloc[:,:-1]
+    assert "y" not in train_df_x.columns
+    reg.fit(train_df_x, train_df.y)
+    test_df = pd.DataFrame()
+    for i in range(len(fac_lst)):
+        result_test = res_lst[i].loc[test_begin:test_end]
+        result_test = np.concatenate(np.array((result_test.T),axis = 0))
+        test_df[fac_lst[i]] = result_test
+    res_value = np.array(reg.predict(test_df))
+    ind,col = data.loc[test_begin:test_end].index, data.loc[test_begin:test_end].columns
+    length = len(ind)
+    res = pd.DataFrame(res_values.reshape[-1,length].T), index = ind, columns = col)
+    return -res
+
+
+
+def rolling_perday(fac_lst, ret, res_dic, direction_dic, days, rolling_window = 500):
+    """
+    Use last rolling_window days data to train linear model and get factors' weights. Compose the next day's factors based on the weights
+
+    fac_lst -> list: the name of factors need composing
+    ret -> DataFrame: daily return of each stock
+    res_dic -> dictionary of DataFrame : each factor's result(decay or not decay)
+    direction_dic -> dictionary: each factor's direction
+    days -> int: the number of days you need
+    rolling_window -> int: the number of days you use to trian the model
+    """
+    result = res_dic[fac_lst[0]].iloc[rolling_window + 1:]
+    ind_all = result.index.tolist()
+
+    if days == -1:
+        pass
+    elif days <= len(ind_all):
+        ind_all = ind_all[:days]
+    elif days > len(ind_all):
+        print("Error, variable days is out of range, function ends")
+        return
+
+    for ind in ind_all:
+        train_df = pd.DataFrame()
+        pt = res_dic[fac_lst[0]].index.get_loc(ind)
+
+        for each in fac_lst:
+            result_train = res_dic[each].iloc[pt - (rolling_window + 1):pt - 1]
+            result_train = np.concatenate(np.array(result_train.T),axis = 0)
+            train_df[each] = result_train
+        train_df = train_df.replace(0, np.nan)
+        train_df["y"] = np.concatenate(np.array(ret.iloc[pt - (rolling_window + 1):pt - 1].T),axis = 0)
+        train_df = train_df.dropna(thresh = 2).replace(np.nan,0)
+        model = linear_model.LinearRegreesion()
+        train_df_x = train_df.iloc[:,:-1]
+        assert "y" not in train_df_x.columns,"explained variable in explaining variables"
+        model.fit(train_df_x, train_df.y)
+        coef = pd.Series(model.coef_)
+
+        for k, each in enumerate(fac_lst):
+            if np.sign(coef[k]) * direction_dic[each] == 1:
+                result.loc[ind] -= res_dic[each].loc[ind] * coef[k]
+
+    return result.loc[ind_all]
