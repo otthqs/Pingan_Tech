@@ -54,7 +54,7 @@ def rank(x):
     :param x: 代表 N 只个股在某指定截面日的因子值
     :return: 返回值为向量，其中第 i 个元素为𝑋𝑖在向量 X 中的分位数
     """
-    return x.rank(axis="columns", pct=True)
+    return x.rank(axis = 1).sub(0.5).div(x.count(axis = 1))
 
 
 def delay(x, d):
@@ -106,7 +106,7 @@ def delta(x, d):
     :param d:
     :return: 返回值为向量 X - delay(X, d)
     """
-    return x.diff(d)
+    return x.diff(int(d))
 
 
 def signedpower(x, a):
@@ -127,19 +127,12 @@ def decay_linear(x, d):
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列的加权平均值，权数为 d, d – 1, ..., 1
     (权数之和应为 1，需进行归一化处理)，其中离现在越近的日子权数越大
     """
-    if not isinstance(d, int):
-        d = int(d)
 
-    weight = np.arange(0, d) + 1
+    weight = np.arange(0, int(d)) + 1
 
-    def f(data):
-        if len(data) < d:
-            return np.nan
-        else:
-            # todo: nansum empty slice will return 0 instead of NaN
-            return np.nansum(data * weight) / np.sum(weight[~np.isnan(data)])
+    res = (x.rolling(window = int(d), min_periods = minp(d)).apply(lambda z: np.nansum(z * weight[-len(z):]) / weight[-len(z):][~np.isnan(z)].sum(), raw = True))
 
-    return x.rolling(window=d, min_periods=1, axis=0).apply(func=f, raw=True)
+    return res
 
 
 
@@ -150,7 +143,7 @@ def ts_min(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列中最小值
     """
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(np.nanmin, raw=True)
+    return x.rolling(window=int(d), min_periods=minp(d), axis=0).min()
 
 
 def ts_max(x, d):
@@ -160,7 +153,7 @@ def ts_max(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列中最大值
     """
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(np.nanmax, raw=True)
+    return x.rolling(window=int(d), min_periods=minp(d), axis=0).max()
 
 
 def ts_argmin(x, d):
@@ -170,7 +163,7 @@ def ts_argmin(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列中最小值出现的位置
     """
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(np.nanargmin, raw=True) + 1
+    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(lambda z: np.nan if np.all(np.isnan(z)) else np.nanargmin(z), raw = True) + 1
 
 
 def ts_argmax(x, d):
@@ -180,7 +173,7 @@ def ts_argmax(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列中最大值出现的位置
     """
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(np.nanargmax, raw=True) + 1
+    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(lambda z: np.nan if np.all(np.isnan(z)) else np.nanargmax(z), raw = True) + 1
 
 
 def ts_rank(x, d):
@@ -190,8 +183,8 @@ def ts_rank(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天 𝑋_𝑖 值构成的时序数列中本截面日 𝑋_𝑖 值所处分位数
     """
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(
-        lambda data: rankdata(data)[-1] / np.sum(~np.isnan(data)), raw=True)
+    return x.rolling(int(d), min_periods = minp(d)).apply(
+    lambda z: np.nan if np.all(np.isnan(z)) else ((rankdata(z[~np.isnan(z)])[-1] -1) * (len(z)-1) / (len(z[~np.isnan(z)]) - 1) + 1), raw = True)
 
 
 def min_(x, y):
@@ -246,7 +239,7 @@ def sum_(x, d=None):
         return ts_sum(x, d)
 
 
-def product(x, d):
+def ts_product(x, d):
     """
 
     :param x: X 的每一行代表 N 只个股在某指定截面日的因子值
@@ -254,15 +247,8 @@ def product(x, d):
     :return: 返回值为向量，其中第 i 个元素为过去 d 天𝑋𝑖值构成的时序数列的连乘乘积
     """
 
-    def f(data):
-        if len(data) < d:
-            return np.nan
-        else:
-            # todo: nanprod empty slice will return 1 instead of NaN
-            tmp = np.nanprod(data)
-            return np.power(tmp, d / np.sum(~np.isnan(data)))
 
-    return x.rolling(window=int(d), min_periods=minp(d), axis=0).apply(func=f, raw=True)
+    return np.log(np.exp(x).rolling(window = int(d), min_periods=minp(d), axis = 0).mean() * int(d))
 
 
 def stddev(x, d):
@@ -282,7 +268,7 @@ def ts_stddev(x, d):
     :param d:
     :return: 返回值为向量，其中第 i 个元素为过去 d 天𝑋𝑖值构成的时序数列的标准差
     """
-    return stddev(x, d)
+    return x.rolling(window = int(d), min_periods=minp(d), axis = 0).std()
 
 
 def log(x):
